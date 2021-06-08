@@ -27,26 +27,39 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 
     g.setColour(Colour(255u, 154u, 1u));
     g.drawEllipse(bounds, 1.f);
-    
-    auto center = bounds.getCentre();
 
-    Path p;
+    if (auto* rsw1 = dynamic_cast<RotarySliderWithLabels*>(&slider))
+    {
+        auto center = bounds.getCentre();
+        Path p;
 
-    Rectangle<float> r;
-    r.setLeft(center.getX() - 2);
-    r.setRight(center.getX() + 2);
-    r.setTop(bounds.getY());
-    r.setBottom(center.getY());
+        Rectangle<float> r;
+        r.setLeft(center.getX() - 2);
+        r.setRight(center.getX() + 2);
+        r.setTop(bounds.getY());
+        r.setBottom(center.getY() - rsw1->getTextHeight() * 1.5);
+        p.addRoundedRectangle(r, 2.f);
+        jassert(rotaryStartAngle < rotaryEndAngle);
 
-    p.addRectangle(r);
+        auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
 
-    jassert(rotaryStartAngle < rotaryEndAngle);
+        p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
 
-    auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+        g.fillPath(p);
 
-    p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
+        g.setFont(rsw1->getTextHeight());
+        auto text = rsw1->getDisplayString();
+        auto strWidth = g.getCurrentFont().getStringWidth(text);
 
-    g.fillPath(p);
+        r.setSize(strWidth + 4, rsw1->getTextHeight() + 2);
+        r.setCentre(bounds.getCentre());
+
+        g.setColour(Colours::black);
+        g.fillRect(r);
+
+        g.setColour(Colours::white);
+        g.drawFittedText(text, r.toNearestInt(), juce::Justification::centred, 1);
+    }
 }
 
 //==============================================================================
@@ -88,6 +101,11 @@ juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
     r.setY(2);
     
     return r;
+}
+
+juce::String RotarySliderWithLabels::getDisplayString() const
+{
+    return juce::String(getValue());
 }
 
 //==============================================================================
